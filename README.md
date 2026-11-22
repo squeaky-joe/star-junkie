@@ -50,6 +50,10 @@ internal/features  one package per feature (setup, ...)
 
 The whole server layout (roles, categories, channels, welcome/rules text) is data in `internal/features/setup/layout.go`. Edit it there.
 
+## Published image
+
+Every push to `main` builds and publishes `ghcr.io/squeaky-joe/star-junkie:latest` (GitHub Actions, see `.github/workflows/docker.yml`). To run it without building, replace `build: .` in `docker-compose.yml` with `image: ghcr.io/squeaky-joe/star-junkie:latest`. The package is private until you make it public (repo → Packages → Package settings → Change visibility).
+
 ## Dev
 
 ```
