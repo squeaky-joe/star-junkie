@@ -66,6 +66,12 @@ func Register(r *commands.Registry, d commands.Deps) {
 					Type: discordgo.ApplicationCommandOptionChannel, Name: "channel", Description: "Text channel", Required: true,
 					ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
 				}},
+			}, {
+				Type: discordgo.ApplicationCommandOptionSubCommand, Name: "timezone",
+				Description: "Default time zone for /event create",
+				Options: []*discordgo.ApplicationCommandOption{{
+					Type: discordgo.ApplicationCommandOptionString, Name: "name", Description: "Like America/New_York", Required: true,
+				}},
 			}},
 		},
 		Handle: func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -192,6 +198,19 @@ func setWelcome(ctx context.Context, s *discordgo.Session, i *discordgo.Interact
 		return
 	}
 	sub := i.ApplicationCommandData().Options[0]
+	if sub.Name == "timezone" {
+		name := sub.Options[0].StringValue()
+		if _, err := time.LoadLocation(name); err != nil {
+			_ = commands.Ephemeral(s, i, "I don't know that time zone. Try a name like America/New_York or Europe/London.")
+			return
+		}
+		if err := db.SetConfig(ctx, d.DB, i.GuildID, "timezone", name); err != nil {
+			_ = commands.Ephemeral(s, i, "Couldn't save that: "+err.Error())
+			return
+		}
+		_ = commands.Ephemeral(s, i, "Default event time zone is now **"+name+"** 🕒")
+		return
+	}
 	ch := sub.Options[0].ChannelValue(s)
 	if err := db.SetConfig(ctx, d.DB, i.GuildID, "welcome_channel", ch.ID); err != nil {
 		_ = commands.Ephemeral(s, i, "Couldn't save that: "+err.Error())

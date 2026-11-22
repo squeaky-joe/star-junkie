@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	_ "time/tzdata" // embedded zone database, so time zones work in the minimal Docker image
 
 	"github.com/starjunkies/bot/internal/bot"
 	"github.com/starjunkies/bot/internal/config"
