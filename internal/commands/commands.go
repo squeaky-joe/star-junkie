@@ -20,15 +20,17 @@ const (
 
 // Deps is what feature handlers need.
 type Deps struct {
-	DB  *sql.DB
-	Log *slog.Logger
+	DB         *sql.DB
+	Log        *slog.Logger
+	ContentDir string // editable markdown/JSON (history, charter, ships)
 }
 
 type HandlerFunc func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate)
 
 type Command struct {
-	Def    *discordgo.ApplicationCommand
-	Handle HandlerFunc
+	Def          *discordgo.ApplicationCommand
+	Handle       HandlerFunc
+	Autocomplete HandlerFunc // optional: answers autocomplete requests for this command's options
 }
 
 type Registry struct {
@@ -59,6 +61,10 @@ func (r *Registry) Dispatch(ctx context.Context, s *discordgo.Session, i *discor
 	case discordgo.InteractionApplicationCommand:
 		if c, ok := r.cmds[i.ApplicationCommandData().Name]; ok {
 			c.Handle(ctx, s, i)
+		}
+	case discordgo.InteractionApplicationCommandAutocomplete:
+		if c, ok := r.cmds[i.ApplicationCommandData().Name]; ok && c.Autocomplete != nil {
+			c.Autocomplete(ctx, s, i)
 		}
 	case discordgo.InteractionMessageComponent, discordgo.InteractionModalSubmit:
 		id := ""

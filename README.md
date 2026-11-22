@@ -20,6 +20,10 @@ Custom Discord bot for the Star Junkies Star Citizen org. Slash commands and com
 
 9. Moderation (Co-Pilot+): `/warn`, `/timeout`, `/kick`, `/ban`, `/modlog`. Everything is logged to #server-logs. `/antispam` shows or tunes the filter (defaults: 5 identical messages in 15s, or 10+ mentions in one message; staff exempt; every removal is logged, and it does nothing if #server-logs doesn't exist).
 
+10. Fun: `/lfc` (crew call with Join/Leave buttons), `/ship` (autocomplete lookup), `/roll`, `/coinflip`, `/verse-fortune`, `/history`, `/charter`.
+
+Edit `content/history.md`, `content/charter.md` and `content/ships.json` any time; the bot re-reads them on every use, no restart. (The shipped ship specs are approximate, so check them and extend the list. To use a real ship API later, implement the two-method `ShipSource` interface in `internal/features/fun/ships.go`.)
+
 Enable **Community** in Server Settings first if you want the 🎙️ Town Hall stage channel; otherwise it's skipped (re-run `/setup` after enabling).
 
 ## Intents

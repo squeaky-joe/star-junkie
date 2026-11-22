@@ -10,6 +10,7 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/bot ./cmd/bot
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/bot /bot
-ENV DB_PATH=/data/bot.db
+COPY content /content
+ENV DB_PATH=/data/bot.db CONTENT_DIR=/content
 VOLUME /data
 ENTRYPOINT ["/bot"]

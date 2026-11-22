@@ -14,7 +14,7 @@ func TestOpenMigrates(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, tbl := range []string{"guild_config", "mod_actions", "applications", "events", "event_rsvps"} {
+		for _, tbl := range []string{"guild_config", "mod_actions", "applications", "events", "event_rsvps", "lfc_posts", "lfc_members"} {
 			var n int
 			if err := d.QueryRow(`SELECT COUNT(*) FROM ` + tbl).Scan(&n); err != nil {
 				t.Errorf("table %s: %v", tbl, err)
