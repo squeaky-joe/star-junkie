@@ -57,13 +57,13 @@ GitHub Actions (`.github/workflows/docker.yml`) publishes `ghcr.io/squeaky-joe/s
 | Tag | When | Use it for |
 |---|---|---|
 | `latest` | every release | the newest release |
-| `2026.11.3`, `2026.11`, `2026` | every release, from the git tag `v2026.11.3` | pinning (`2026.11` follows the month's newest revision) |
+| `2026.11.3`, `2026.11`, `2026` | every release, from the git tag `2026.11.3` | pinning (`2026.11` follows the month's newest revision) |
 
 Only tagged releases build an image; ordinary pushes to `main` don't.
 
 Releases are versioned `year.month.revision`: `2026.11.1` is the first release of November 2026, then `2026.11.2`, and the revision restarts at 1 each month. **Don't zero-pad the month** (`2026.1.1`, not `2026.01.1`), because the tag tooling only accepts SemVer-shaped numbers.
 
-To cut a release: `git tag v2026.11.1 && git push origin v2026.11.1`. To run the image without building, replace `build: .` in `docker-compose.yml` with `image: ghcr.io/squeaky-joe/star-junkie:2026.11` (or `:latest`). The package is private until you make it public (repo → Packages → Package settings → Change visibility).
+To cut a release: `git tag 2026.11.1 && git push origin 2026.11.1`. To run the image without building, replace `build: .` in `docker-compose.yml` with `image: ghcr.io/squeaky-joe/star-junkie:2026.11` (or `:latest`). The package is private until you make it public (repo → Packages → Package settings → Change visibility).
 
 ## Dev
 

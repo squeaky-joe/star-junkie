@@ -2,7 +2,7 @@ name: docker
 
 on:
   push:
-    tags: ["v*"] # releases only: git tag v2026.11.1 && git push origin v2026.11.1
+    tags: ["[0-9]*"] # releases only: git tag 2026.11.1 && git push origin 2026.11.1
 
 permissions:
   contents: read
