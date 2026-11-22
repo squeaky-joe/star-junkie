@@ -1,0 +1,81 @@
+// Package commands holds the slash-command registry and small reply helpers shared by features.
+package commands
+
+import (
+	"context"
+	"database/sql"
+	"log/slog"
+
+	"github.com/bwmarrin/discordgo"
+)
+
+// Org palette.
+const (
+	ColorIndigo = 0x2A2550
+	ColorCream  = 0xF3EAD3
+	ColorOrange = 0xF2A04B
+	ColorTeal   = 0x3B9C9C
+)
+
+// Deps is what feature handlers need.
+type Deps struct {
+	DB  *sql.DB
+	Log *slog.Logger
+}
+
+type HandlerFunc func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate)
+
+type Command struct {
+	Def    *discordgo.ApplicationCommand
+	Handle HandlerFunc
+}
+
+type Registry struct {
+	cmds map[string]Command
+}
+
+func NewRegistry() *Registry { return &Registry{cmds: map[string]Command{}} }
+
+func (r *Registry) Add(c Command) { r.cmds[c.Def.Name] = c }
+
+// Defs returns the definitions to send to Discord.
+func (r *Registry) Defs() []*discordgo.ApplicationCommand {
+	out := make([]*discordgo.ApplicationCommand, 0, len(r.cmds))
+	for _, c := range r.cmds {
+		out = append(out, c.Def)
+	}
+	return out
+}
+
+func (r *Registry) Dispatch(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type != discordgo.InteractionApplicationCommand {
+		return
+	}
+	if c, ok := r.cmds[i.ApplicationCommandData().Name]; ok {
+		c.Handle(ctx, s, i)
+	}
+}
+
+// Ephemeral replies privately (errors, admin output). Never pings anyone.
+func Ephemeral(s *discordgo.Session, i *discordgo.InteractionCreate, msg string) error {
+	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content:         msg,
+			Flags:           discordgo.MessageFlagsEphemeral,
+			AllowedMentions: &discordgo.MessageAllowedMentions{},
+		},
+	})
+}
+
+// DeferEphemeral acknowledges a slow command; follow up with s.InteractionResponseEdit.
+func DeferEphemeral(s *discordgo.Session, i *discordgo.InteractionCreate) error {
+	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{Flags: discordgo.MessageFlagsEphemeral},
+	})
+}
+
+func IsAdmin(i *discordgo.InteractionCreate) bool {
+	return i.Member != nil && i.Member.Permissions&discordgo.PermissionAdministrator != 0
+}
