@@ -14,6 +14,7 @@ Custom Discord bot for the Star Junkies Star Citizen org. Slash commands and com
    - Local: `go run ./cmd/bot`
    - Docker: `docker compose up -d --build` (DB lives in the `botdata` volume)
 6. In Discord, run `/setup dry-run:true` to preview, then `/setup`. Re-running is safe; existing things are skipped.
+7. Run `/rolepanel` to post the ping-role buttons in #get-roles. Optional: `/config welcome-channel` (defaults to #general-chat).
 
 Enable **Community** in Server Settings first if you want the 🎙️ Town Hall stage channel; otherwise it's skipped (re-run `/setup` after enabling).
 

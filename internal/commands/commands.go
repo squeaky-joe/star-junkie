@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -31,10 +32,16 @@ type Command struct {
 }
 
 type Registry struct {
-	cmds map[string]Command
+	cmds  map[string]Command
+	comps map[string]HandlerFunc // by custom-ID prefix (text before the first ":")
 }
 
-func NewRegistry() *Registry { return &Registry{cmds: map[string]Command{}} }
+func NewRegistry() *Registry {
+	return &Registry{cmds: map[string]Command{}, comps: map[string]HandlerFunc{}}
+}
+
+// Component routes buttons/selects/modals whose custom ID starts with "prefix:".
+func (r *Registry) Component(prefix string, h HandlerFunc) { r.comps[prefix] = h }
 
 func (r *Registry) Add(c Command) { r.cmds[c.Def.Name] = c }
 
@@ -48,11 +55,22 @@ func (r *Registry) Defs() []*discordgo.ApplicationCommand {
 }
 
 func (r *Registry) Dispatch(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
-	if i.Type != discordgo.InteractionApplicationCommand {
-		return
-	}
-	if c, ok := r.cmds[i.ApplicationCommandData().Name]; ok {
-		c.Handle(ctx, s, i)
+	switch i.Type {
+	case discordgo.InteractionApplicationCommand:
+		if c, ok := r.cmds[i.ApplicationCommandData().Name]; ok {
+			c.Handle(ctx, s, i)
+		}
+	case discordgo.InteractionMessageComponent, discordgo.InteractionModalSubmit:
+		id := ""
+		if i.Type == discordgo.InteractionMessageComponent {
+			id = i.MessageComponentData().CustomID
+		} else {
+			id = i.ModalSubmitData().CustomID
+		}
+		prefix, _, _ := strings.Cut(id, ":")
+		if h, ok := r.comps[prefix]; ok {
+			h(ctx, s, i)
+		}
 	}
 }
 

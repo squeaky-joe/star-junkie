@@ -12,6 +12,7 @@ import (
 
 	"github.com/starjunkies/bot/internal/commands"
 	"github.com/starjunkies/bot/internal/config"
+	"github.com/starjunkies/bot/internal/features/onboarding"
 	"github.com/starjunkies/bot/internal/features/setup"
 )
 
@@ -21,12 +22,14 @@ func Run(ctx context.Context, cfg config.Config, db *sql.DB, log *slog.Logger) e
 	if err != nil {
 		return err
 	}
-	// Add intents per feature as they land (see README). /setup needs only Guilds.
-	s.Identify.Intents = discordgo.IntentsGuilds
+	// Add intents per feature as they land (see README). GuildMembers is privileged.
+	s.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers
 
 	reg := commands.NewRegistry()
 	deps := commands.Deps{DB: db, Log: log}
 	setup.Register(reg, deps)
+	onboarding.Register(reg, deps)
+	onboarding.AddHandlers(ctx, s, deps)
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		hctx, cancel := context.WithTimeout(ctx, 14*time.Minute) // interaction tokens last 15 min

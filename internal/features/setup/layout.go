@@ -1,6 +1,8 @@
 package setup
 
 import (
+	"strings"
+
 	"github.com/bwmarrin/discordgo"
 
 	"github.com/starjunkies/bot/internal/commands"
@@ -72,6 +74,9 @@ var PingRoles = []string{
 	"Game Night", "Trading", "Mining", "Exploring",
 	"Bounty Hunting", "Cargo Hauling", "Racing", "Other Games",
 }
+
+// PingKey is the DB/custom-ID key for a ping role: "Game Night" -> "game-night".
+func PingKey(name string) string { return strings.ReplaceAll(strings.ToLower(name), " ", "-") }
 
 var Categories = []CategoryDef{
 	{Name: "📌 START HERE", Access: Public, Channels: []ChannelDef{

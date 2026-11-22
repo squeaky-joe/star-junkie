@@ -159,7 +159,7 @@ func run(ctx context.Context, s *discordgo.Session, d commands.Deps, guildID str
 	}
 	for _, name := range PingRoles {
 		yes := true
-		if err := ensureRole(discordgo.RoleParams{Name: name, Mentionable: &yes}, strings.ReplaceAll(lower(name), " ", "-")); err != nil {
+		if err := ensureRole(discordgo.RoleParams{Name: name, Mentionable: &yes}, PingKey(name)); err != nil {
 			return rep, err
 		}
 	}
