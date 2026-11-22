@@ -3,12 +3,14 @@ package fun
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -170,10 +172,13 @@ type apiShips struct {
 	client *http.Client
 	log    *slog.Logger
 	pause  time.Duration // between page requests, to be polite
+	cache  string        // ships.json: loaded at startup, rewritten after each refresh ("" = no cache)
 
 	mu    sync.RWMutex
 	ships []Ship
 }
+
+const refreshEvery = 12 * time.Hour
 
 func newAPIShips(base string, log *slog.Logger) *apiShips {
 	return &apiShips{base: strings.TrimRight(base, "/"), client: &http.Client{Timeout: 90 * time.Second}, log: log, pause: 2 * time.Second}
@@ -188,6 +193,9 @@ func (a *apiShips) snapshot() []Ship {
 func (a *apiShips) ready() bool { return len(a.snapshot()) > 0 }
 
 func (a *apiShips) Find(_ context.Context, q string) (Ship, bool, error) {
+	if !a.ready() {
+		return Ship{}, false, errors.New("ship data not loaded yet")
+	}
 	s, ok := matchShip(a.snapshot(), q)
 	return s, ok, nil
 }
@@ -251,52 +259,81 @@ func (a *apiShips) refresh(ctx context.Context) error {
 	a.ships = ships
 	a.mu.Unlock()
 	a.log.Info("ship data refreshed", "ships", len(ships))
+	if err := a.saveCache(ships); err != nil {
+		a.log.Warn("couldn't write ship cache (the bot keeps working from memory)", "err", err)
+	}
 	return nil
 }
 
-// run refreshes now and then every 12 hours (retrying every 5 minutes after a failure) until ctx ends.
-func (a *apiShips) run(ctx context.Context) {
-	for {
-		wait := 12 * time.Hour
-		if err := a.refresh(ctx); err != nil {
-			a.log.Warn("ship data refresh failed", "err", err)
-			wait = 5 * time.Minute
+// loadCache seeds the snapshot from the cache file. It returns the file's mod time and whether the file was usable.
+func (a *apiShips) loadCache() (time.Time, bool) {
+	if a.cache == "" {
+		return time.Time{}, false
+	}
+	ships, err := jsonShips{path: a.cache}.load()
+	fi, statErr := os.Stat(a.cache)
+	if err != nil || statErr != nil || len(ships) == 0 {
+		if !errors.Is(err, os.ErrNotExist) {
+			a.log.Warn("ship cache unusable, downloading fresh data", "err", err)
 		}
+		return time.Time{}, false
+	}
+	a.mu.Lock()
+	a.ships = ships
+	a.mu.Unlock()
+	a.log.Info("ship cache loaded", "ships", len(ships), "age", time.Since(fi.ModTime()).Round(time.Minute))
+	return fi.ModTime(), true
+}
+
+// saveCache writes the snapshot atomically (temp file, then rename) so a crash never leaves half a file.
+func (a *apiShips) saveCache(ships []Ship) error {
+	if a.cache == "" {
+		return nil
+	}
+	data, err := json.MarshalIndent(struct {
+		Updated string `json:"updated"`
+		Ships   []Ship `json:"ships"`
+	}{time.Now().UTC().Format(time.RFC3339), ships}, "", " ")
+	if err != nil {
+		return err
+	}
+	tmp := a.cache + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, a.cache)
+}
+
+// run loads the cache, then refreshes every 12 hours (retrying every 5 minutes after a failure) until ctx ends.
+// A cache younger than 12 hours means no download at startup, so restarts are free.
+func (a *apiShips) run(ctx context.Context) {
+	var wait time.Duration
+	if t, ok := a.loadCache(); ok {
+		wait = max(0, refreshEvery-time.Since(t))
+	}
+	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-time.After(wait):
 		}
+		wait = refreshEvery
+		if err := a.refresh(ctx); err != nil {
+			a.log.Warn("ship data refresh failed", "err", err)
+			wait = 5 * time.Minute
+		}
 	}
 }
 
-// layered uses the API snapshot once it has loaded, and the local JSON file until then (or if it never does).
-type layered struct {
-	api      *apiShips
-	fallback ShipSource
-}
-
-func (l layered) Find(ctx context.Context, q string) (Ship, bool, error) {
-	if l.api.ready() {
-		return l.api.Find(ctx, q)
-	}
-	return l.fallback.Find(ctx, q)
-}
-
-func (l layered) Suggest(ctx context.Context, q string, limit int) ([]string, error) {
-	if l.api.ready() {
-		return l.api.Suggest(ctx, q, limit)
-	}
-	return l.fallback.Suggest(ctx, q, limit)
-}
-
-// newShipSource picks the API (with JSON fallback), or JSON only when SHIP_API_URL is "off".
+// newShipSource uses the API with content/ships.json as its on-disk cache,
+// or just reads that file when SHIP_API_URL is "off".
 func newShipSource(ctx context.Context, d commands.Deps) ShipSource {
-	j := jsonShips{path: filepath.Join(d.ContentDir, "ships.json")}
+	cache := filepath.Join(d.ContentDir, "ships.json")
 	if d.ShipAPI == "" {
-		return j
+		return jsonShips{path: cache}
 	}
 	a := newAPIShips(d.ShipAPI, d.Log)
+	a.cache = cache
 	go a.run(ctx)
-	return layered{api: a, fallback: j}
+	return a
 }

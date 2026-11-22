@@ -7,7 +7,8 @@ services:
       DB_PATH: /data/bot.db
     volumes:
       - botdata:/data
-      - ./content:/content:ro # edit history.md, charter.md, ships.json on the host, no rebuild needed
+      # Edit the .md files on the host, no rebuild needed. Writable because the bot keeps ships.json (its ship cache) here.
+      - ./content:/content
 
 volumes:
   botdata:

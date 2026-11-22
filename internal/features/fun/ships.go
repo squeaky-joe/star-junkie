@@ -25,13 +25,13 @@ type Ship struct {
 	Status       string `json:"status"` // e.g. flight-ready, in-concept
 	Description  string `json:"description"`
 
-	// Filled in by API-backed sources only.
-	URL    string `json:"-"`
-	Credit string `json:"-"` // data attribution shown in the embed footer
+	// Filled in by API-backed data (and kept in the ships.json cache).
+	URL    string `json:"url,omitempty"`
+	Credit string `json:"credit,omitempty"` // data attribution shown in the embed footer
 }
 
-// ShipSource is where ship info comes from: the Star Citizen Wiki API when available
-// (ship_api.go), else content/ships.json. Implement these two methods to add another source.
+// ShipSource is where ship info comes from: the Star Citizen Wiki API, cached in
+// content/ships.json (ship_api.go), or that file alone. Implement these two methods to add another source.
 type ShipSource interface {
 	Find(ctx context.Context, query string) (Ship, bool, error)
 	Suggest(ctx context.Context, query string, limit int) ([]string, error)
@@ -188,7 +188,7 @@ func registerShip(r *commands.Registry, d commands.Deps, src ShipSource) {
 			ship, ok, err := src.Find(ctx, q)
 			if err != nil {
 				d.Log.Error("ship lookup", "err", err)
-				_ = commands.Ephemeral(s, i, "I can't read my ship list right now. Ask a Founder to check content/ships.json.")
+				_ = commands.Ephemeral(s, i, "My ship list isn't loaded yet. Try again in a minute, and if it keeps happening, ask a Founder.")
 				return
 			}
 			if !ok {

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -106,28 +107,54 @@ func TestAPIRefresh(t *testing.T) {
 	}
 }
 
-func TestLayeredFallback(t *testing.T) {
+func TestCache(t *testing.T) {
 	var fail atomic.Bool
 	var hits atomic.Int32
 	srv := testServer(t, &fail, &hits)
 	defer srv.Close()
-	a := newAPIShips(srv.URL, slog.New(slog.NewTextHandler(io.Discard, nil)))
-	a.pause = 0
-	l := layered{api: a, fallback: jsonShips{path: "../../../content/ships.json"}}
+	log := slog.New(slog.NewTextHandler(io.Discard, nil))
+	cache := filepath.Join(t.TempDir(), "ships.json")
 
-	// Before the API loads: served from the local JSON file.
-	if s, ok, err := l.Find(context.Background(), "cutlass black"); err != nil || !ok || s.Credit != "" {
-		t.Errorf("fallback: %+v %v %v", s, ok, err)
+	// Empty or broken cache file: not usable, no panic, and /ship says "not loaded" instead of "no such ship".
+	if err := os.WriteFile(cache, nil, 0o644); err != nil {
+		t.Fatal(err)
 	}
+	a := newAPIShips(srv.URL, log)
+	a.pause, a.cache = 0, cache
+	if _, ok := a.loadCache(); ok {
+		t.Fatal("empty file must not count as a cache")
+	}
+	if _, _, err := a.Find(context.Background(), "carrack"); err == nil {
+		t.Error("Find before any data should report not-loaded")
+	}
+
+	// A refresh writes the cache, keeping URL and credit.
 	if err := a.refresh(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	// After: served from the API.
-	if s, ok, _ := l.Find(context.Background(), "carrack"); !ok || s.Credit != shipCredit {
-		t.Errorf("api: %+v %v", s, ok)
+	if _, err := os.Stat(cache + ".tmp"); err == nil {
+		t.Error("temp file should be renamed away")
 	}
-	if _, ok, _ := l.Find(context.Background(), "cutlass black"); ok {
-		t.Error("once the API is loaded, the JSON file is no longer consulted")
+
+	// A new instance (a restart) serves straight from the file, with the API down.
+	fail.Store(true)
+	hits.Store(0)
+	b := newAPIShips(srv.URL, log)
+	b.cache = cache
+	mod, ok := b.loadCache()
+	if !ok || time.Since(mod) > time.Minute {
+		t.Fatalf("cache should load and be fresh: %v %v", mod, ok)
+	}
+	if s, found, err := b.Find(context.Background(), "carrack"); err != nil || !found || s.Credit != shipCredit || s.URL == "" || s.CrewMax != 12 {
+		t.Errorf("from cache: %+v %v %v", s, found, err)
+	}
+	if hits.Load() != 0 {
+		t.Error("loading the cache must not touch the API")
+	}
+
+	// The cache file stays readable by the plain JSON source (SHIP_API_URL=off).
+	if s, found, err := (jsonShips{path: cache}).Find(context.Background(), "carrack"); err != nil || !found || s.Name != "Carrack" {
+		t.Errorf("jsonShips on cache: %+v %v %v", s, found, err)
 	}
 }
 

@@ -12,7 +12,7 @@ RUN mkdir /out/data
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/bot /bot
-COPY content /content
+COPY --chown=nonroot:nonroot content /content
 COPY --from=build --chown=nonroot:nonroot /out/data /data
 ENV DB_PATH=/data/bot.db CONTENT_DIR=/content
 VOLUME /data

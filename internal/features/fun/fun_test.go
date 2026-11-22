@@ -1,7 +1,6 @@
 package fun
 
 import (
-	"context"
 	"strings"
 	"testing"
 
@@ -105,30 +104,6 @@ func TestShipLookup(t *testing.T) {
 	}
 	if got := suggest(ships, "", 2); len(got) != 2 {
 		t.Errorf("suggest limit: %v", got)
-	}
-}
-
-// Validates the real content/ships.json that ships with the bot.
-func TestShippedShipData(t *testing.T) {
-	src := jsonShips{path: "../../../content/ships.json"}
-	ships, err := src.load()
-	if err != nil || len(ships) < 10 {
-		t.Fatalf("load: %d ships, %v", len(ships), err)
-	}
-	seen := map[string]bool{}
-	for _, s := range ships {
-		if s.Name == "" || s.Manufacturer == "" || seen[strings.ToLower(s.Name)] || s.CrewMax < s.CrewMin {
-			t.Errorf("bad entry: %+v", s)
-		}
-		seen[strings.ToLower(s.Name)] = true
-	}
-	var _ ShipSource = src
-	if s, ok, err := src.Find(context.Background(), "cutlass"); err != nil || !ok || s.CargoSCU == 0 {
-		t.Errorf("find: %+v %v %v", s, ok, err)
-	}
-	e := shipEmbed(ships[0])
-	if e.Title != ships[0].Name || len(e.Fields) < 3 || e.Footer == nil {
-		t.Errorf("embed: %+v", e)
 	}
 }
 

@@ -1,15 +1,39 @@
-**1. Chill first.** Star Junkies exists to hang out, relax and play together.
+# Star Junkies Charter
 
-**2. No quotas, no pressure.** Play when you want, how you want. Nobody owes the org their time.
+*Established 2956*
 
-**3. Be kind.** Harassment, hate and drama aren't welcome here.
+## Article I: Name and Purpose
+This organization is called Star Junkies. Its purpose is to provide a relaxed, welcoming place for players to hang out, chill, and enjoy Star Citizen together, with no pressure and no obligations.
 
-**4. Everyone starts as a Guest.** Hang out, get to know us, and apply when you're ready to become a Star Junkie.
+## Article II: Membership
+1. Anyone who wants to hang out and play the game is welcome to apply.
+2. Members can play any style they like, and no specific playstyle is required.
+3. Members may also belong to other organizations unless it creates a conflict of interest.
+4. There are no activity requirements. Members who are away for a while keep their place.
 
-**5. Play your way.** Hauling, mining, bounties, racing, exploring, other games, or just vibes. It's all good.
+## Article III: Code of Conduct
+1. **Be respectful.** Treat everyone with kindness. Harassment, hate speech, and bullying are not tolerated.
+2. **Keep it chill.** Resolve disagreements calmly. Leave drama at the door.
+3. **No griefing members.** Playful chaos is fine when everyone's in on it. Intentionally ruining a fellow member's game is not.
+4. **Respect the group.** Don't speak for the org in ways that misrepresent it, and don't cause trouble in its name.
 
-**6. Respect each other's play.** Don't grief fellow Junkies. PvP only when everyone's into it.
+## Article IV: Leadership
+1. The founder(s) lead the org and make final decisions.
+2. Leadership will keep things simple, fair, and transparent, and will listen to member feedback.
+3. Officers or moderators may be appointed as the org grows.
 
-**7. Co-Pilots keep the peace.** They help run things and keep the vibes good. If one asks you to cool it, please do.
+## Article V: Activities
+1. All events and group sessions are optional.
+2. Members are encouraged to suggest and organize their own activities.
+3. Spontaneous play is the default, and structure is the exception.
 
-**8. The Founder has the final say** on changes to this charter.
+## Article VI: Discipline and Removal
+1. Minor issues are handled with a friendly conversation first.
+2. Repeated or serious violations of the Code of Conduct may result in removal.
+3. Leadership makes the final decision, and members may appeal.
+
+## Article VII: Amendments
+This charter may be updated by leadership as the org grows, with input from members. Significant changes will be shared with everyone.
+
+## Article VIII: Our Spirit
+When in doubt, be a good crewmate, keep it fun, and let the verse take us where it will.

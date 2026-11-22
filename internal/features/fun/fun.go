@@ -183,6 +183,8 @@ func registerContent(r *commands.Registry, d commands.Deps) {
 	for _, c := range []struct{ name, file, title, desc string }{
 		{"history", "history.md", "📜 Star Junkies history", "Post the story of the org"},
 		{"charter", "charter.md", "📋 Star Junkies charter", "Post the org charter"},
+		{"manifesto", "manifesto.md", "🌌 The Star Junkies manifesto", "Post the org manifesto"},
+		{"rules", "rules.md", "📌 Star Junkies rules", "Post the server rules"},
 	} {
 		r.Add(commands.Command{
 			Def: &discordgo.ApplicationCommand{Name: c.name, Description: c.desc, DMPermission: &noDM},

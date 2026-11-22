@@ -20,11 +20,11 @@ Custom Discord bot for the Star Junkies Star Citizen org. Slash commands and com
 
 9. Moderation (Co-Pilot+): `/warn`, `/timeout`, `/kick`, `/ban`, `/modlog`. Everything is logged to #server-logs. `/antispam` shows or tunes the filter (defaults: 5 identical messages in 15s, or 10+ mentions in one message; staff exempt; every removal is logged, and it does nothing if #server-logs doesn't exist).
 
-10. Fun: `/lfc` (crew call with Join/Leave buttons), `/ship` (autocomplete lookup), `/roll`, `/coinflip`, `/verse-fortune`, `/history`, `/charter`.
+10. Fun: `/lfc` (crew call with Join/Leave buttons), `/ship` (autocomplete lookup), `/roll`, `/coinflip`, `/verse-fortune`, `/history`, `/charter`, `/manifesto`, `/rules`.
 
-Ship data for `/ship` comes from the [Star Citizen Wiki API](https://api.star-citizen.wiki/developers) (credited in each embed). The bot downloads the full list at startup and every 12 hours (about 15 MB, ~15 seconds) and answers from memory, so there's no per-command API traffic. If the API is down it falls back to `content/ships.json`; set `SHIP_API_URL=off` to use only the file.
+Ship data for `/ship` comes from the [Star Citizen Wiki API](https://api.star-citizen.wiki/developers) (credited in each embed). The bot downloads the full list every 12 hours (about 15 MB, ~15 seconds), keeps it in memory and saves it to `content/ships.json`, so commands never hit the API and a restart within 12 hours loads from the file instead of downloading again. If the API is down, the last saved list keeps working. Don't hand-edit `ships.json`; the bot overwrites it. Set `SHIP_API_URL=off` to stop updating it and use the file as-is. The content folder must be writable by the bot for the cache to save (if it isn't, you get a log warning and the bot still works).
 
-Edit `content/history.md`, `content/charter.md` and `content/ships.json` any time; the bot re-reads them on every use, no restart. (The shipped ship specs are approximate, so check them and extend the list. To use a real ship API later, implement the two-method `ShipSource` interface in `internal/features/fun/ships.go`.)
+Edit `content/history.md`, `charter.md`, `manifesto.md` and `rules.md` any time; the bot re-reads them on every use, no restart.
 
 Enable **Community** in Server Settings first if you want the 🎙️ Town Hall stage channel; otherwise it's skipped (re-run `/setup` after enabling).
 
