@@ -12,6 +12,7 @@ import (
 
 	"github.com/starjunkies/bot/internal/commands"
 	"github.com/starjunkies/bot/internal/config"
+	"github.com/starjunkies/bot/internal/features/applications"
 	"github.com/starjunkies/bot/internal/features/onboarding"
 	"github.com/starjunkies/bot/internal/features/setup"
 )
@@ -29,6 +30,7 @@ func Run(ctx context.Context, cfg config.Config, db *sql.DB, log *slog.Logger) e
 	deps := commands.Deps{DB: db, Log: log}
 	setup.Register(reg, deps)
 	onboarding.Register(reg, deps)
+	applications.Register(reg, deps)
 	onboarding.AddHandlers(ctx, s, deps)
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
