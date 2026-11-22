@@ -7,8 +7,8 @@ Custom Discord bot for the Star Junkies Star Citizen org. Slash commands and com
 1. Create an application at <https://discord.com/developers/applications>, add a **Bot**, copy the token.
 2. Copy `.env.example` to `.env` and set `DISCORD_TOKEN` (and `GUILD_ID` while developing).
 3. Invite the bot with scopes **`bot`** and **`applications.commands`** and these permissions:
-   Manage Roles, Manage Channels, Manage Server, Manage Events, View Channels, Send Messages, Embed Links, Read Message History.
-   (Later features add Kick/Ban/Moderate Members, Manage Messages, Manage Events, View Audit Log. The easy route is Administrator.)
+   Manage Roles, Manage Channels, Manage Server, Manage Events, Manage Messages, Kick Members, Ban Members, Moderate Members, View Audit Log, View Channels, Send Messages, Embed Links, Read Message History.
+   (The easy route is Administrator.)
 4. In **Server Settings → Roles**, drag the bot's role to the **top**. It can only create and order roles below its own.
 5. Run it:
    - Local: `go run ./cmd/bot`
@@ -18,6 +18,8 @@ Custom Discord bot for the Star Junkies Star Citizen org. Slash commands and com
 
 8. Set your default event time zone: `/config timezone America/New_York` (otherwise UTC). Then `/event create title date time` (e.g. `2026-12-05` `20:00` or `8pm`). Events show in everyone's local time; Star Junkies and staff can create them.
 
+9. Moderation (Co-Pilot+): `/warn`, `/timeout`, `/kick`, `/ban`, `/modlog`. Everything is logged to #server-logs. `/antispam` shows or tunes the filter (defaults: 5 identical messages in 15s, or 10+ mentions in one message; staff exempt; every removal is logged, and it does nothing if #server-logs doesn't exist).
+
 Enable **Community** in Server Settings first if you want the 🎙️ Town Hall stage channel; otherwise it's skipped (re-run `/setup` after enabling).
 
 ## Intents
@@ -25,8 +27,9 @@ Enable **Community** in Server Settings first if you want the 🎙️ Town Hall 
 | Intent | Needed for | Portal toggle |
 | --- | --- | --- |
 | Guilds | everything (on now) | none |
-| Server Members | join/leave, auto-Guest (feature 2+) | **Privileged**, enable it |
-| Message Content | anti-spam, message logs (feature 5) | **Privileged**, enable it |
+| Server Members | join/leave, auto-Guest, role-change logs | **Privileged**, enable it |
+| Message Content | anti-spam, message edit/delete logs | **Privileged**, enable it |
+| Guild Moderation (bans) | ban logs | none |
 
 ## Layout
 

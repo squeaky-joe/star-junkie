@@ -38,10 +38,10 @@ func IsStaff(ctx context.Context, d Deps, i *discordgo.InteractionCreate) bool {
 }
 
 // PostLog drops an embed into #server-logs (if /setup has made it). Never pings anyone.
-func PostLog(ctx context.Context, s *discordgo.Session, d Deps, guildID string, e *discordgo.MessageEmbed) {
+func PostLog(ctx context.Context, s *discordgo.Session, d Deps, guildID string, e *discordgo.MessageEmbed) bool {
 	ch := ChannelID(ctx, d, guildID, "server-logs")
 	if ch == "" {
-		return
+		return false
 	}
 	if e.Color == 0 {
 		e.Color = ColorTeal
@@ -51,7 +51,28 @@ func PostLog(ctx context.Context, s *discordgo.Session, d Deps, guildID string, 
 		AllowedMentions: &discordgo.MessageAllowedMentions{},
 	}, discordgo.WithContext(ctx)); err != nil {
 		d.Log.Warn("post log", "err", err)
+		return false
 	}
+	return true
+}
+
+// OptMap indexes a command's options by name.
+func OptMap(opts []*discordgo.ApplicationCommandInteractionDataOption) map[string]*discordgo.ApplicationCommandInteractionDataOption {
+	m := make(map[string]*discordgo.ApplicationCommandInteractionDataOption, len(opts))
+	for _, o := range opts {
+		m[o.Name] = o
+	}
+	return m
+}
+
+// SendDM messages a user privately; it fails if their DMs are closed.
+func SendDM(s *discordgo.Session, userID, text string) error {
+	ch, err := s.UserChannelCreate(userID)
+	if err != nil {
+		return err
+	}
+	_, err = s.ChannelMessageSend(ch.ID, text)
+	return err
 }
 
 // Public replies in-channel, pinging only the listed users.

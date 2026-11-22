@@ -14,6 +14,7 @@ import (
 	"github.com/starjunkies/bot/internal/config"
 	"github.com/starjunkies/bot/internal/features/applications"
 	"github.com/starjunkies/bot/internal/features/events"
+	"github.com/starjunkies/bot/internal/features/moderation"
 	"github.com/starjunkies/bot/internal/features/onboarding"
 	"github.com/starjunkies/bot/internal/features/setup"
 )
@@ -25,7 +26,10 @@ func Run(ctx context.Context, cfg config.Config, db *sql.DB, log *slog.Logger) e
 		return err
 	}
 	// Add intents per feature as they land (see README). GuildMembers is privileged.
-	s.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers
+	// GuildMembers and MessageContent are privileged: enable them in the developer portal.
+	s.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMembers |
+		discordgo.IntentsGuildMessages | discordgo.IntentsMessageContent | discordgo.IntentsGuildBans
+	s.State.MaxMessageCount = 1000 // per channel; lets delete/edit logs show the old text
 
 	reg := commands.NewRegistry()
 	deps := commands.Deps{DB: db, Log: log}
@@ -33,6 +37,8 @@ func Run(ctx context.Context, cfg config.Config, db *sql.DB, log *slog.Logger) e
 	onboarding.Register(reg, deps)
 	applications.Register(reg, deps)
 	events.Register(reg, deps)
+	moderation.Register(reg, deps)
+	moderation.AddHandlers(ctx, s, deps)
 	onboarding.AddHandlers(ctx, s, deps)
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
