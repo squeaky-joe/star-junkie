@@ -52,7 +52,15 @@ The whole server layout (roles, categories, channels, welcome/rules text) is dat
 
 ## Published image
 
-Every push to `main` builds and publishes `ghcr.io/squeaky-joe/star-junkie:latest` (GitHub Actions, see `.github/workflows/docker.yml`). To run it without building, replace `build: .` in `docker-compose.yml` with `image: ghcr.io/squeaky-joe/star-junkie:latest`. The package is private until you make it public (repo → Packages → Package settings → Change visibility).
+GitHub Actions (`.github/workflows/docker.yml`) publishes `ghcr.io/squeaky-joe/star-junkie` with these tags:
+
+| Tag | When | Use it for |
+|---|---|---|
+| `latest` | every push to `main` | trying the newest code |
+| `sha-abc1234` | every push to `main` | an exact commit |
+| `1.2.3`, `1.2`, `1` | when you push a git tag like `v1.2.3` | pinning a release (`1` follows minor and patch updates) |
+
+To cut a release: `git tag v1.0.0 && git push origin v1.0.0`. To run the image without building, replace `build: .` in `docker-compose.yml` with `image: ghcr.io/squeaky-joe/star-junkie:1` (or `:latest`). The package is private until you make it public (repo → Packages → Package settings → Change visibility).
 
 ## Dev
 
