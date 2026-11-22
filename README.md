@@ -55,3 +55,9 @@ The whole server layout (roles, categories, channels, welcome/rules text) is dat
 ```
 go vet ./... && go build ./... && go test ./...
 ```
+
+## License
+
+[MIT](LICENSE). Ship data comes from the community-run [Star Citizen Wiki API](https://api.star-citizen.wiki/developers) (please keep the credit and non-commercial use it asks for).
+
+This is an unofficial fan project, not affiliated with or endorsed by Cloud Imperium Games. Star Citizen® and related names are trademarks of Cloud Imperium Rights LLC.
