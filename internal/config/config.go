@@ -14,6 +14,7 @@ type Config struct {
 	DBPath  string // DB_PATH
 
 	ContentDir string // CONTENT_DIR: editable history.md, charter.md, ships.json
+	ShipAPI    string // SHIP_API_URL: Star Citizen Wiki API base URL; "off" disables it
 }
 
 func Load() (Config, error) {
@@ -27,6 +28,14 @@ func Load() (Config, error) {
 	}
 	if c.ContentDir == "" {
 		c.ContentDir = "content"
+	}
+	switch v := os.Getenv("SHIP_API_URL"); v {
+	case "":
+		c.ShipAPI = "https://api.star-citizen.wiki"
+	case "off":
+		c.ShipAPI = ""
+	default:
+		c.ShipAPI = v
 	}
 	if c.DBPath == "" {
 		c.DBPath = "data/bot.db"

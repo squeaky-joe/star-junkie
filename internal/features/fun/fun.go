@@ -16,11 +16,12 @@ import (
 	"github.com/starjunkies/bot/internal/commands"
 )
 
-func Register(r *commands.Registry, d commands.Deps) {
+// Register adds the commands. ctx bounds the background ship-data refresh.
+func Register(ctx context.Context, r *commands.Registry, d commands.Deps) {
 	registerDice(r)
 	registerContent(r, d)
 	registerLFC(r, d)
-	registerShip(r, d)
+	registerShip(r, d, newShipSource(ctx, d))
 }
 
 // ---- dice, coin, fortune ----

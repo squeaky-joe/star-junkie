@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -21,11 +20,18 @@ type Ship struct {
 	CrewMin      int    `json:"crew_min"`
 	CrewMax      int    `json:"crew_max"`
 	CargoSCU     int    `json:"cargo_scu"`
+	SCM          int    `json:"scm"`    // SCM speed, m/s
+	MSRP         int    `json:"msrp"`   // pledge price, USD
+	Status       string `json:"status"` // e.g. flight-ready, in-concept
 	Description  string `json:"description"`
+
+	// Filled in by API-backed sources only.
+	URL    string `json:"-"`
+	Credit string `json:"-"` // data attribution shown in the embed footer
 }
 
-// ShipSource is where ship info comes from. Today it's a JSON file; to use a real API,
-// implement these two methods and pass it to newShipHandlers in registerShip.
+// ShipSource is where ship info comes from: the Star Citizen Wiki API when available
+// (ship_api.go), else content/ships.json. Implement these two methods to add another source.
 type ShipSource interface {
 	Find(ctx context.Context, query string) (Ship, bool, error)
 	Suggest(ctx context.Context, query string, limit int) ([]string, error)
@@ -92,27 +98,51 @@ func matchShip(ships []Ship, q string) (Ship, bool) {
 	if len(prefix) == 1 {
 		return prefix[0], true
 	}
+	// "freelancer" matches "MISC Freelancer" plus its variants (DUR, MAX...): if every other match
+	// contains the shortest name, that's the base ship.
+	if len(contains) > 1 {
+		base := contains[0]
+		for _, s := range contains[1:] {
+			if len(s.Name) < len(base.Name) {
+				base = s
+			}
+		}
+		for _, s := range contains {
+			if !strings.Contains(strings.ToLower(s.Name), strings.ToLower(base.Name)) {
+				return Ship{}, false
+			}
+		}
+		return base, true
+	}
 	return Ship{}, false
 }
 
 func suggest(ships []Ship, q string, limit int) []string {
 	q = strings.ToLower(strings.TrimSpace(q))
-	var out []string
+	var starts, has []string // names starting with the query come first
 	for _, s := range ships {
-		if len(out) == limit {
-			break
+		n := strings.ToLower(s.Name)
+		switch {
+		case strings.HasPrefix(n, q):
+			starts = append(starts, s.Name)
+		case strings.Contains(n, q):
+			has = append(has, s.Name)
 		}
-		if strings.Contains(strings.ToLower(s.Name), q) {
-			out = append(out, s.Name)
-		}
+	}
+	out := append(starts, has...)
+	if len(out) > limit {
+		out = out[:limit]
 	}
 	return out
 }
 
 func shipEmbed(s Ship) *discordgo.MessageEmbed {
 	e := &discordgo.MessageEmbed{
-		Title: s.Name, Description: s.Description, Color: commands.ColorOrange,
+		Title: s.Name, Description: s.Description, Color: commands.ColorOrange, URL: s.URL,
 		Footer: &discordgo.MessageEmbedFooter{Text: "Specs are approximate. Check the official site for current numbers."},
+	}
+	if s.Credit != "" {
+		e.Footer.Text = s.Credit
 	}
 	add := func(name, val string) {
 		if val != "" {
@@ -131,11 +161,19 @@ func shipEmbed(s Ship) *discordgo.MessageEmbed {
 	if s.CargoSCU > 0 {
 		add("Cargo", fmt.Sprintf("%d SCU", s.CargoSCU))
 	}
+	if s.SCM > 0 {
+		add("SCM speed", fmt.Sprintf("%d m/s", s.SCM))
+	}
+	if s.MSRP > 0 {
+		add("Pledge price", fmt.Sprintf("$%d", s.MSRP))
+	}
+	if s.Status != "" && s.Status != "flight-ready" {
+		add("Status", s.Status)
+	}
 	return e
 }
 
-func registerShip(r *commands.Registry, d commands.Deps) {
-	src := ShipSource(jsonShips{path: filepath.Join(d.ContentDir, "ships.json")})
+func registerShip(r *commands.Registry, d commands.Deps, src ShipSource) {
 	noDM := false
 	r.Add(commands.Command{
 		Def: &discordgo.ApplicationCommand{
@@ -155,8 +193,8 @@ func registerShip(r *commands.Registry, d commands.Deps) {
 			}
 			if !ok {
 				msg := fmt.Sprintf("I don't have %q in my ship list yet.", q)
-				if alts, _ := src.Suggest(ctx, q, 5); len(alts) > 0 {
-					msg += " Did you mean: " + strings.Join(alts, ", ") + "?"
+				if alts, _ := src.Suggest(ctx, q, 8); len(alts) > 0 {
+					msg = fmt.Sprintf("A few ships match %q. Which one? ", q) + strings.Join(alts, ", ")
 				}
 				_ = commands.Ephemeral(s, i, msg)
 				return

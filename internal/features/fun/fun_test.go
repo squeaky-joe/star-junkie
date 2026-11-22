@@ -92,6 +92,14 @@ func TestShipLookup(t *testing.T) {
 			t.Errorf("%q: got %q ok=%v, want %q", c.q, got.Name, ok, c.want)
 		}
 	}
+	// A base ship plus its variants resolves to the base; unrelated look-alikes stay ambiguous.
+	fl := []Ship{{Name: "MISC Freelancer MAX"}, {Name: "MISC Freelancer"}, {Name: "MISC Freelancer DUR"}, {Name: "Cutlass Black"}, {Name: "Cutlass Blue"}}
+	if s, ok := matchShip(fl, "freelancer"); !ok || s.Name != "MISC Freelancer" {
+		t.Errorf("base ship: %v %v", s.Name, ok)
+	}
+	if _, ok := matchShip(fl, "cutlass"); ok {
+		t.Error("cutlass black vs blue must stay ambiguous")
+	}
 	if got := suggest(ships, "const", 5); len(got) != 2 {
 		t.Errorf("suggest: %v", got)
 	}

@@ -22,6 +22,8 @@ Custom Discord bot for the Star Junkies Star Citizen org. Slash commands and com
 
 10. Fun: `/lfc` (crew call with Join/Leave buttons), `/ship` (autocomplete lookup), `/roll`, `/coinflip`, `/verse-fortune`, `/history`, `/charter`.
 
+Ship data for `/ship` comes from the [Star Citizen Wiki API](https://api.star-citizen.wiki/developers) (credited in each embed). The bot downloads the full list at startup and every 12 hours (about 15 MB, ~15 seconds) and answers from memory, so there's no per-command API traffic. If the API is down it falls back to `content/ships.json`; set `SHIP_API_URL=off` to use only the file.
+
 Edit `content/history.md`, `content/charter.md` and `content/ships.json` any time; the bot re-reads them on every use, no restart. (The shipped ship specs are approximate, so check them and extend the list. To use a real ship API later, implement the two-method `ShipSource` interface in `internal/features/fun/ships.go`.)
 
 Enable **Community** in Server Settings first if you want the 🎙️ Town Hall stage channel; otherwise it's skipped (re-run `/setup` after enabling).

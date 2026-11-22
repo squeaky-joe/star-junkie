@@ -23,6 +23,7 @@ type Deps struct {
 	DB         *sql.DB
 	Log        *slog.Logger
 	ContentDir string // editable markdown/JSON (history, charter, ships)
+	ShipAPI    string // base URL of the Star Citizen Wiki API; empty = use content/ships.json only
 }
 
 type HandlerFunc func(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate)

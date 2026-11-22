@@ -33,12 +33,12 @@ func Run(ctx context.Context, cfg config.Config, db *sql.DB, log *slog.Logger) e
 	s.State.MaxMessageCount = 1000 // per channel; lets delete/edit logs show the old text
 
 	reg := commands.NewRegistry()
-	deps := commands.Deps{DB: db, Log: log, ContentDir: cfg.ContentDir}
+	deps := commands.Deps{DB: db, Log: log, ContentDir: cfg.ContentDir, ShipAPI: cfg.ShipAPI}
 	setup.Register(reg, deps)
 	onboarding.Register(reg, deps)
 	applications.Register(reg, deps)
 	events.Register(reg, deps)
-	fun.Register(reg, deps)
+	fun.Register(ctx, reg, deps)
 	moderation.Register(reg, deps)
 	moderation.AddHandlers(ctx, s, deps)
 	onboarding.AddHandlers(ctx, s, deps)
