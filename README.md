@@ -50,6 +50,19 @@ internal/features  one package per feature (setup, ...)
 
 The whole server layout (roles, categories, channels, welcome/rules text) is data in `internal/features/setup/layout.go`. Edit it there.
 
+## Quick start from the published image
+
+No Go, no build. Create the bot in the Discord developer portal first (steps 1-4 under Setup, including the two privileged intents), then:
+
+```
+curl -O https://raw.githubusercontent.com/squeaky-joe/star-junkie/main/docker-compose.ghcr.yml
+echo "DISCORD_TOKEN=your-token-here" > .env
+docker compose -f docker-compose.ghcr.yml up -d
+docker compose -f docker-compose.ghcr.yml logs -f
+```
+
+Defaults: the latest release, global slash commands (set `GUILD_ID` in `.env` for instant commands in one server), and the database in a Docker volume. The history, charter, manifesto and rules text ships inside the image; see the comment in the compose file to customize them.
+
 ## Published image
 
 GitHub Actions (`.github/workflows/docker.yml`) publishes `ghcr.io/squeaky-joe/star-junkie` with these tags:
