@@ -7,10 +7,13 @@ RUN go mod download
 COPY . .
 # Pure-Go SQLite driver, so no CGO and a static binary.
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/bot ./cmd/bot
+# distroless has no shell, so prepare the data dir here and copy it in with the right owner.
+RUN mkdir /out/data
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/bot /bot
 COPY content /content
+COPY --from=build --chown=nonroot:nonroot /out/data /data
 ENV DB_PATH=/data/bot.db CONTENT_DIR=/content
 VOLUME /data
 ENTRYPOINT ["/bot"]
